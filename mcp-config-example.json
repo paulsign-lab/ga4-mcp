@@ -1,0 +1,10 @@
+{
+  "analytics-mcp": {
+    "type": "stdio",
+    "command": "/Users/YOUR_USERNAME/.local/bin/analytics-mcp",
+    "args": [],
+    "env": {
+      "GOOGLE_APPLICATION_CREDENTIALS": "/Users/YOUR_USERNAME/.config/gcloud/application_default_credentials.json"
+    }
+  }
+}

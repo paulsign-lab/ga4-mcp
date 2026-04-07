@@ -1,0 +1,21 @@
+# Google 인증 관련 파일 - 절대 커밋 금지
+*.json
+!mcp-config-example.json
+client_secret*.json
+application_default_credentials.json
+credentials.json
+service_account*.json
+*_key.json
+
+# gcloud 관련
+.gcloud/
+
+# 환경변수 파일
+.env
+.env.*
+
+# Claude Code 로컬 설정 (개인 경로 포함)
+.claude/
+
+# OS
+.DS_Store

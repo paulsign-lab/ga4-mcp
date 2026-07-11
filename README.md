@@ -1,7 +1,25 @@
 # GA4 MCP for Claude Code
 
 > GA4 데이터를 **자연어 한 줄**로 조회하고, 결과를 **Google Sheets에 자동 저장**하는 Claude Code 연동 가이드.  
+> 여기에 더해, 웹사이트 URL 하나로 **dataLayer·GTM 추적 설정을 자동 설계**하는 스킬까지 함께 들어 있습니다.  
 > 설치 시간: 약 10분 · 주간 채널 리포트: 30초 · 채널별 시트 자동 생성: 1분
+
+## 이 저장소가 하는 두 가지
+
+이 저장소는 GA4를 두 방향에서 다룹니다. **데이터를 만드는 쪽**과 **데이터를 읽는 쪽**입니다.
+
+| 축 | 하는 일 | 언제 | 사용 |
+|---|---|---|---|
+| 🛠️ **설정** | 사이트 분석 → dataLayer·GTM·SEO 산출물 생성 | 추적이 아직 없을 때 | `site-marketing-infra-setup` 스킬 (`prompts/09`) |
+| 📊 **분석** | 이미 쌓인 GA4 데이터를 자연어로 조회·리포트 | 데이터가 쌓인 뒤 | GA4 MCP + `prompts/00~08` |
+
+흐름은 이렇습니다. **설정**으로 사이트에 추적 코드를 심어 데이터가 쌓이게 만든 다음,
+며칠~몇 주 뒤 **분석**으로 그 성과를 읽습니다.
+
+- 판매하는 쇼핑몰(**D2C**)이든, 카탈로그·문의 중심의 **B2B** 기업 사이트든 각각에 맞는 dataLayer가 설계됩니다.
+- dataLayer는 "파는 것"이 아니라 **"가치 있는 행동"**을 추적합니다 — D2C는 구매, B2B는 문의·다운로드.
+
+> 이 스킬 하나만 따로 쓰는 방법과 산출물 상세는 [.claude/skills/site-marketing-infra-setup/README.md](.claude/skills/site-marketing-infra-setup/README.md)를 보세요.
 
 ## 이렇게 달라집니다
 
@@ -97,6 +115,32 @@ claude
 2. 기본 데이터 확인
 3. **내 사이트 유형 선택** (이커머스 / B2B / 일반)
 4. 전환 이벤트 확인
+
+> 💡 4번에서 **전환 이벤트가 하나도 없다면** 아직 추적이 설정되지 않은 것입니다.
+> 분석할 데이터가 없으니, 먼저 아래 "추적 설정하기"로 dataLayer·GTM을 심으세요.
+
+---
+
+## 추적 설정하기 (dataLayer · GTM) — 🛠️ 설정편
+
+분석할 데이터가 아직 없다면, `ga4-mcp` 폴더에서 `claude`를 실행한 뒤 내 사이트 URL을 주세요.
+포함된 `site-marketing-infra-setup` 스킬이 사이트를 분석해 추적 인프라 4종을 만들어 줍니다.
+
+```
+example.com 분석해서 마케팅 인프라 세팅해줘
+```
+
+| 산출물 | 내용 |
+|---|---|
+| `Marketing_Checklist.xlsx` | GA4 이벤트 매트릭스·GTM 태그맵·SEO 등 10개 시트 |
+| `Marketing_Guide.docx` | 개념→GA4→GTM→dataLayer→Pixel→SEO 11파트 가이드 |
+| `gtm_container.json` | GTM에 **Import 즉시 사용** 가능한 컨테이너 |
+| `dataLayer 스니펫` | 사이트에 붙여넣는 코드 (`.liquid` Shopify / `.js` 일반) |
+
+- **D2C 이커머스**: `purchase` 중심 구매 퍼널 22종 이벤트 (`items[]`·`value`·`coupon`)
+- **B2B 리드**: `request_quote`·`contact_form_submit`·`catalog_download_complete` 중심 (판매 이벤트 제외)
+
+자세한 사용법은 `prompts/09-datalayer-gtm-setup.md`.
 
 ---
 
@@ -222,7 +266,16 @@ ga4-mcp/
 ├── .gitignore
 ├── setup.sh                           macOS / Linux 자동 설치
 ├── setup.ps1                          Windows 자동 설치 (PowerShell)
-├── CLAUDE.md                          Claude 컨텍스트 (B2C/B2B 분기 + MCP 도구 목록)
+├── CLAUDE.md                          Claude 컨텍스트 (분석/설정 라우팅 + MCP 도구 목록)
+├── .claude/
+│   └── skills/
+│       └── site-marketing-infra-setup/   🛠️ dataLayer·GTM 설정 스킬
+│           ├── SKILL.md                   스킬 작업 매뉴얼 (7단계 워크플로우)
+│           ├── playbooks/                 b2b_lead.md · d2c_ecommerce.md
+│           ├── templates/                 dataLayer 스니펫 · GTM 베이스
+│           ├── scripts/                   xlsx · docx · GTM JSON 빌더
+│           ├── reference/                 플랫폼·모델 감지, GTM 검증 규칙
+│           └── examples/                  Janibell 산출물 예시 (품질 기준)
 ├── docs/
 │   ├── gcp-setup-guide.md             GA4용 Google Cloud 인증 가이드
 │   └── sheets-gcp-setup.md            Google Sheets MCP 인증 가이드
@@ -240,8 +293,13 @@ ga4-mcp/
     ├── 05-full-marketing-report.md    종합 마케팅 리포트
     ├── 06-ecommerce-report.md         B2C 이커머스 전용
     ├── 07-b2b-report.md               B2B 기업 웹사이트 전용
-    └── 08-ga4-to-sheets.md            GA4 → Google Sheets 연동 활용
+    ├── 08-ga4-to-sheets.md            GA4 → Google Sheets 연동 활용
+    └── 09-datalayer-gtm-setup.md      🛠️ dataLayer·GTM 설정 (스킬 호출)
 ```
+
+> 🛠️ **설정편**(`.claude/skills/` + `prompts/09`)은 추적을 새로 심는 단계,
+> 📊 **분석편**(`prompts/00~08`)은 쌓인 데이터를 읽는 단계입니다.
+> `ga4-mcp` 폴더 안에서 `claude`를 실행하면 두 축이 한 세션에서 모두 작동합니다.
 
 ---
 

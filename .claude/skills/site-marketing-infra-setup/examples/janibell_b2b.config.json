@@ -1,0 +1,79 @@
+{
+  "$comment": "Reference config produced by the skill for janibell.com. Use this as the structural template for new sites. All fields are required unless marked optional.",
+
+  "site": {
+    "url": "https://janibell.com",
+    "name": "Janibell",
+    "brand_name": "Janibell",
+    "platform": "shopify",
+    "theme": "Motion_final",
+    "currency": "USD",
+    "locale": "en"
+  },
+
+  "model": "b2b_lead",
+
+  "industries": ["HOME", "BABY", "PETS", "CARE", "MEDICAL", "PUBLIC", "HOSPITALITY", "OFFICE"],
+
+  "industry_url_map": {
+    "home-odor-sealing-pails": "HOME",
+    "diaper-pails": "BABY",
+    "pet-waste-pails": "PETS",
+    "adult-care-disposal": "CARE",
+    "medical-waste-pails": "MEDICAL",
+    "sanitary-disposal-bins": "PUBLIC",
+    "hospitality-sanitary-bins": "HOSPITALITY",
+    "office-sanitary-bins": "OFFICE"
+  },
+
+  "legacy_industry_url_map": {
+    "home": "HOME",
+    "baby": "BABY",
+    "pets": "PETS",
+    "care": "CARE",
+    "medical": "MEDICAL",
+    "public": "PUBLIC",
+    "hospitality": "HOSPITALITY",
+    "office": "OFFICE"
+  },
+
+  "existing_tracking": {
+    "gtm": false,
+    "ga4": false,
+    "meta_pixel": false,
+    "klaviyo": true
+  },
+
+  "url_migrations": [
+    { "from": "/collections/home사본", "to": "/collections/diaper-pails", "industry": "BABY", "note": "원래 BABY 메뉴가 가리키던 핸들" },
+    { "from": "/collections/baby사본", "to": "/collections/pet-waste-pails", "industry": "PETS", "note": "원래 PETS 메뉴가 가리키던 핸들" },
+    { "from": "/collections/medical사본", "to": "/collections/adult-care-disposal", "industry": "CARE", "note": "원래 CARE 메뉴가 가리키던 핸들" },
+    { "from": "/collections/pets사본", "to": "/collections/medical-waste-pails", "industry": "MEDICAL", "note": "원래 MEDICAL 메뉴가 가리키던 핸들" },
+    { "from": "/collections/care사본", "to": "/collections/sanitary-disposal-bins", "industry": "PUBLIC", "note": "원래 PUBLIC 메뉴가 가리키던 핸들" },
+    { "from": "/collections/office사본", "to": "/collections/hospitality-sanitary-bins", "industry": "HOSPITALITY", "note": "원래 HOSPITALITY 메뉴가 가리키던 핸들" },
+    { "from": "/collections/public사본", "to": "/collections/office-sanitary-bins", "industry": "OFFICE", "note": "원래 OFFICE 메뉴가 가리키던 핸들" },
+    { "from": "/collections/home", "to": "/collections/home-odor-sealing-pails", "industry": "HOME", "note": "기존 home 컬렉션 키워드 핸들로 마이그레이션" },
+    { "from": "/pages/brand-stroy", "to": "/pages/brand-story", "industry": "—", "note": "Brand Story 페이지 핸들 오타 수정" }
+  ],
+
+  "pages_seo": [
+    { "label": "홈", "url": "/", "title": "Janibell | Premium Odor-Sealing Disposal Systems for B2B Partners", "meta_description": "Janibell delivers odor-sealing diaper pails and hygiene disposal systems trusted by childcare, healthcare, and retail partners across North America. GRS-certified.", "h1": "janibell", "schema": "Organization", "og_image": "필수", "status": "현재값 유지" }
+  ],
+
+  "discovered_issues": [
+    { "category": "URL 정합성", "priority": "P0", "title": "사본 + 메뉴-핸들 불일치", "resolution": "Pattern A 키워드 URL 재핸들링" },
+    { "category": "URL 정합성", "priority": "P0", "title": "Brand Story URL 오타", "resolution": "brand-stroy → brand-story + redirect" },
+    { "category": "정보 구조", "priority": "P0", "title": "GNB Products/Legacy/New Technology 동일 링크", "resolution": "별도 페이지 분리 또는 메뉴 단순화" },
+    { "category": "Contact 폼", "priority": "P0", "title": "B2B 필수 필드 누락 (Company/Country/Industry/InquiryType)", "resolution": "Shopify 섹션에 필드 추가 + dataLayer push 포함" },
+    { "category": "스크립트", "priority": "P0", "title": "GA4/GTM/Meta Pixel 미설치", "resolution": "본 스킬의 4종 산출물로 해결" },
+    { "category": "벤더 메타", "priority": "P1", "title": "product.vendor = 'janibell.dev'", "resolution": "Shopify Bulk edit으로 'Janibell'로 변경" }
+  ],
+
+  "kpis": {
+    "primary": "Qualified Lead = request_quote + contact_form_submit + catalog_download_complete",
+    "secondary": "Lead Efficiency = Sessions / Qualified Lead",
+    "monthly_target": 30
+  },
+
+  "output_directory": "/Users/tradeschool/Documents/Claude/Projects/매직캔_B2B웹사이트 구축&교육/마케팅인프라_세팅"
+}

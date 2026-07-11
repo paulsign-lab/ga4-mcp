@@ -1,0 +1,12 @@
+# 환경 변수 (민감 정보)
+.env
+
+# macOS
+.DS_Store
+
+# 로그
+*.log
+
+# 임시 파일
+*.bak
+*.tmp

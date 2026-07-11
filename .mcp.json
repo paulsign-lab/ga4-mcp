@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "ga4": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-ga4"],
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "${HOME}/.config/gcloud/application_default_credentials.json",
+        "GA_PROPERTY_ID": "여기에_9자리_숫자_입력"
+      }
+    }
+  }
+}

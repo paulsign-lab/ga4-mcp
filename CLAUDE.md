@@ -24,6 +24,8 @@
 
 ## 사용 가능한 MCP 도구
 
+### GA4 MCP (`mcp__ga4__*`)
+
 | 도구 | 용도 |
 |---|---|
 | `mcp__ga4__run_report` | 차원·지표 조합으로 데이터 조회 (주요 도구, 90% 호출) |
@@ -31,6 +33,26 @@
 | `mcp__ga4__get_realtime_data` | 실시간 활성 사용자·페이지 (5초) |
 | `mcp__ga4__list_metrics` | 사용 가능한 지표 목록 조회 |
 | `mcp__ga4__list_dimensions` | 사용 가능한 차원 목록 조회 |
+
+### Google Sheets MCP (`mcp__google-sheets__*`)
+
+| 도구 | 용도 |
+|---|---|
+| `mcp__google-sheets__get_spreadsheet_info` | 스프레드시트 기본 정보 및 시트 목록 조회 |
+| `mcp__google-sheets__read_sheet` | 시트의 특정 범위 데이터 읽기 |
+| `mcp__google-sheets__batch_read_sheet` | 여러 범위를 한 번에 읽기 |
+| `mcp__google-sheets__write_sheet` | 특정 셀 범위에 데이터 쓰기 |
+| `mcp__google-sheets__append_sheet` | 시트 마지막 행에 데이터 추가 |
+| `mcp__google-sheets__clear_sheet` | 특정 범위 데이터 초기화 |
+| `mcp__google-sheets__add_sheet` | 새 시트(탭) 추가 |
+| `mcp__google-sheets__delete_sheet` | 시트 삭제 |
+| `mcp__google-sheets__create_spreadsheet` | 새 스프레드시트 생성 |
+| `mcp__google-sheets__format_cells` | 배경색·글꼴·정렬 등 셀 서식 적용 |
+
+**Sheets MCP 활용 패턴:**
+- GA4 데이터 조회 → `create_spreadsheet`로 새 파일 생성 → `write_sheet`로 데이터 기록 → `format_cells`로 서식 적용
+- 주간 누적: `append_sheet`로 매주 새 행에 데이터 추가 (기존 데이터 유지)
+- 다중 탭 리포트: `add_sheet`로 탭 생성 후 각 탭에 `write_sheet` 반복
 
 ---
 
@@ -180,3 +202,4 @@
 | `05-full-marketing-report.md` | 종합 마케팅 리포트 |
 | `06-ecommerce-report.md` | B2C 이커머스 전용 |
 | `07-b2b-report.md` | B2B 기업 웹사이트 전용 |
+| `08-ga4-to-sheets.md` | GA4 데이터 → Google Sheets 시각화 |

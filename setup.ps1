@@ -11,12 +11,12 @@ function Write-Err  { param($msg) Write-Host "  [X]  $msg" -ForegroundColor Red;
 function Write-Info { param($msg) Write-Host "       $msg" -ForegroundColor Gray }
 
 Write-Host ""
-Write-Host "GA4 MCP 설치 시작 (Windows)" -ForegroundColor Cyan
+Write-Host "GA4 + Google Sheets MCP 설치 시작 (Windows)" -ForegroundColor Cyan
 Write-Host "------------------------------------------"
 Write-Host ""
 
 # ── Step 1: Node.js 확인 ─────────────────────────────────
-Write-Host "[1/4] Node.js 확인..."
+Write-Host "[1/5] Node.js 확인..."
 try {
     $nodeVer = (node --version 2>$null)
     $nodeMajor = [int]($nodeVer -replace 'v', '' -split '\.')[0]
@@ -30,7 +30,7 @@ try {
 
 # ── Step 2: gcloud CLI 확인 / 설치 ─────────────────────
 Write-Host ""
-Write-Host "[2/4] gcloud CLI 확인..."
+Write-Host "[2/5] gcloud CLI 확인..."
 
 $gcloudCmd = $null
 if (Get-Command gcloud -ErrorAction SilentlyContinue) {
@@ -58,7 +58,7 @@ if (Get-Command gcloud -ErrorAction SilentlyContinue) {
 
 # ── Step 3: ADC 인증 ────────────────────────────────────
 Write-Host ""
-Write-Host "[3/4] Google 인증 설정..."
+Write-Host "[3/5] Google 인증 설정..."
 
 $adcFile = "$env:APPDATA\gcloud\application_default_credentials.json"
 $skipAuth = $false
@@ -117,7 +117,7 @@ if (-not $skipAuth) {
 
 # ── Step 4: GA4 속성 ID 설정 ────────────────────────────
 Write-Host ""
-Write-Host "[4/4] GA4 속성 ID 설정..."
+Write-Host "[4/5] GA4 속성 ID 설정..."
 
 # 현재 .mcp.json에서 속성 ID 읽기
 $currentId = node -e @"
@@ -156,7 +156,62 @@ const d = JSON.parse(fs.readFileSync('.mcp.json', 'utf8'));
 d.mcpServers.ga4.env.GA_PROPERTY_ID = '$propertyId';
 fs.writeFileSync('.mcp.json', JSON.stringify(d, null, 2) + '\n');
 "@
-Write-OK ".mcp.json 속성 ID 등록 완료 ($propertyId)"
+Write-OK ".mcp.json 속성 ID 등록 완료 ($propertyId) — 경로 설정 중..."
+
+# .mcp.json Sheets 경로 업데이트
+$repoPath = (Get-Location).Path -replace '\\', '/'
+node -e @"
+const fs = require('fs');
+const d = JSON.parse(fs.readFileSync('.mcp.json', 'utf8'));
+d.mcpServers['google-sheets'].args = ['$repoPath/mcp-server/index.js'];
+fs.writeFileSync('.mcp.json', JSON.stringify(d, null, 2) + '\n');
+"@
+Write-OK ".mcp.json 설정 완료"
+
+# ── Step 5: Google Sheets MCP 설정 ──────────────────────────
+Write-Host ""
+Write-Host "[5/5] Google Sheets MCP 설정..."
+
+$sheetsDestDir = Join-Path (Get-Location) "mcp-server"
+$sheetsDest = Join-Path $sheetsDestDir "oauth_credentials.json"
+$sheetsDone = $false
+
+if (Test-Path $sheetsDest) {
+    Write-OK "Sheets OAuth 클라이언트 이미 설정됨"
+    $sheetsDone = $true
+} else {
+    $sheetsFile = Get-ChildItem "$env:USERPROFILE\Downloads\client_secret_sheets*.json" -ErrorAction SilentlyContinue | Select-Object -First 1
+
+    if (-not $sheetsFile) {
+        $savedGa4 = "$env:APPDATA\gcloud\ga4_oauth_client.json"
+        $ga4Content = if (Test-Path $savedGa4) { Get-Content $savedGa4 -Raw } else { "" }
+        $sheetsFile = Get-ChildItem "$env:USERPROFILE\Downloads\client_secret_*.json" -ErrorAction SilentlyContinue |
+            Where-Object { (Get-Content $_.FullName -Raw) -ne $ga4Content } |
+            Select-Object -First 1
+    }
+
+    if ($sheetsFile) {
+        Copy-Item $sheetsFile.FullName $sheetsDest
+        Write-OK "Sheets OAuth 클라이언트 설정: $($sheetsFile.Name)"
+        $sheetsDone = $true
+    } else {
+        Write-Warn "Google Sheets OAuth 클라이언트 JSON을 찾지 못했습니다."
+        Write-Info ""
+        Write-Info "  ▸ Sheets MCP 설정 방법: docs\sheets-gcp-setup.md"
+        Write-Info "  ▸ GA4 분석은 지금 바로 사용 가능합니다."
+        Write-Info "  ▸ Sheets JSON 발급 후 setup.ps1 재실행으로 추가할 수 있습니다."
+        Write-Host ""
+    }
+}
+
+if ($sheetsDone) {
+    Write-Info "npm 의존성 설치 중..."
+    Push-Location mcp-server
+    npm install --quiet 2>$null
+    if ($LASTEXITCODE -ne 0) { npm install }
+    Pop-Location
+    Write-OK "npm 의존성 설치 완료"
+}
 
 # ── 설치 완료 ─────────────────────────────────────────────
 Write-Host ""
@@ -171,5 +226,11 @@ Write-Host "  Claude가 실행되면 아래 질문을 입력해보세요:"
 Write-Host ""
 Write-Host "    「지난 7일 채널별 세션 수와 전환 수를 표로 정리해줘」" -ForegroundColor Yellow
 Write-Host ""
+if ($sheetsDone) {
+    Write-Host "  Google Sheets 연동 예시:" -ForegroundColor White
+    Write-Host ""
+    Write-Host "    「GA4 채널 리포트를 구글 시트에 표로 만들어줘」" -ForegroundColor Yellow
+    Write-Host ""
+}
 Write-Host "  분석 템플릿: prompts\ 폴더"
 Write-Host ""

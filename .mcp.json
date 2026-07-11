@@ -7,6 +7,10 @@
         "GOOGLE_APPLICATION_CREDENTIALS": "${HOME}/.config/gcloud/application_default_credentials.json",
         "GA_PROPERTY_ID": "여기에_9자리_숫자_입력"
       }
+    },
+    "google-sheets": {
+      "command": "node",
+      "args": ["./mcp-server/index.js"]
     }
   }
 }

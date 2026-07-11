@@ -1,7 +1,7 @@
 # GA4 MCP for Claude Code
 
-> GA4 데이터를 **자연어 한 줄**로 조회하는 Claude Code 연동 가이드.  
-> 설치 시간: 약 10분 · 주간 채널 리포트: 30초
+> GA4 데이터를 **자연어 한 줄**로 조회하고, 결과를 **Google Sheets에 자동 저장**하는 Claude Code 연동 가이드.  
+> 설치 시간: 약 10분 · 주간 채널 리포트: 30초 · 채널별 시트 자동 생성: 1분
 
 ## 이렇게 달라집니다
 
@@ -13,16 +13,18 @@
 | 실시간 활성 사용자 확인 | GA4 탭 열기 | 5초 |
 | 이커머스 매출·퍼널 분석 | 30분 | 1분 |
 | B2B 리드·카탈로그 다운로드 분석 | 30분 | 1분 |
+| GA4 데이터 → Google Sheets 표·그래프 | 수동 복사 + 서식 작업 · 30분 | 자연어 한 줄 · 1분 |
 
 ---
 
-## 준비물 3가지
+## 준비물
 
 | 항목 | 확인 방법 |
 |---|---|
 | **Node.js 18+** | `node --version` (없으면 [nodejs.org](https://nodejs.org) LTS 설치) |
 | **GA4 속성 ID** | analytics.google.com → 왼쪽 하단 ⚙ 관리 → 속성 설정 → 오른쪽 상단 '속성 ID' (숫자 9자리) |
-| **GCP OAuth 클라이언트 JSON** | 회사 Google Workspace 계정 필수 · 개인 Gmail은 선택 ([발급 방법 →](docs/gcp-setup-guide.md)) |
+| **GA4용 GCP OAuth 클라이언트 JSON** | 회사 Google Workspace 계정 필수 · 개인 Gmail은 선택 ([발급 방법 →](docs/gcp-setup-guide.md)) |
+| **Sheets용 GCP OAuth 클라이언트 JSON** | Google Sheets MCP 사용 시 필요 · GA4와 별도 발급 ([발급 방법 →](docs/sheets-gcp-setup.md)) |
 
 ---
 
@@ -32,11 +34,12 @@
 
 구글 계정 인증이 처음이라면 setup.sh 실행 전에 먼저 읽어보세요.
 
-```
-docs/gcp-setup-guide.md
-```
+| 용도 | 가이드 |
+|---|---|
+| **GA4 연동** (필수) | [docs/gcp-setup-guide.md](docs/gcp-setup-guide.md) |
+| **Google Sheets 연동** (선택) | [docs/sheets-gcp-setup.md](docs/sheets-gcp-setup.md) |
 
-→ GCP 콘솔에서 API 활성화 + OAuth 클라이언트 발급 방법을 단계별로 안내합니다.
+→ 각 가이드에서 GCP 콘솔 API 활성화 + OAuth 클라이언트 발급 방법을 단계별로 안내합니다.
 
 ### 1단계 · 클론
 
@@ -64,6 +67,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 2. gcloud CLI 설치 (없으면 자동 설치 · 약 2분)
 3. Google 계정 인증 (브라우저 OAuth 1회 클릭)
 4. GA4 속성 ID 입력 → `.mcp.json` 자동 등록
+5. Google Sheets MCP 설정 (OAuth JSON 감지 시 자동 · 없으면 건너뜀)
 
 ### 3단계 · Claude Code 실행
 
@@ -80,7 +84,8 @@ claude
 /mcp
 ```
 
-`ga4 · Connected` 가 보이면 완료입니다.
+`ga4 · Connected` 와 `google-sheets · Connected` 가 보이면 완료입니다.  
+(Sheets 설정을 건너뛴 경우 ga4만 표시됩니다)
 
 ---
 
@@ -143,6 +148,22 @@ claude
 지금 내 사이트 활성 사용자 몇 명이야? 어떤 페이지 보고 있어?
 ```
 
+### Google Sheets 연동 (Sheets MCP 설정 시)
+
+```
+지난 7일 채널별 세션 수와 전환 수를 GA4에서 가져와서
+새 구글 시트를 만들어 표로 정리해줘. 헤더는 파란 배경으로 서식 적용해줘.
+```
+```
+지난 28일 채널별 매출 데이터를 Google Sheets로 내보내고
+이탈률이 높은 행은 빨간 배경으로 강조해줘.
+```
+```
+GA4 주간 리포트를 4개 탭(요약·채널·랜딩·디바이스)으로 자동 생성해줘.
+```
+
+> 더 많은 연동 예시: `prompts/08-ga4-to-sheets.md`
+
 ---
 
 ## 트러블슈팅
@@ -168,6 +189,18 @@ claude
 `ga4-mcp` 폴더 안에서 `claude`를 실행했는지 확인하세요.  
 → `cd ga4-mcp && claude` 후 `/mcp` 입력
 
+### `mcp__google-sheets__*` 도구가 보이지 않음
+
+1. `mcp-server/oauth_credentials.json` 파일이 있는지 확인  
+   → 없으면 `bash setup.sh` 재실행 (Sheets OAuth JSON이 Downloads에 있어야 함)
+2. `mcp-server/node_modules/` 폴더가 있는지 확인  
+   → 없으면 `cd mcp-server && npm install`
+3. Claude Code 완전 종료 후 재시작 → 브라우저 인증 팝업 완료
+
+### 브라우저 인증 창이 안 열림 (Sheets MCP)
+
+터미널 출력에 URL이 표시됩니다. 복사해서 브라우저 주소창에 직접 붙여넣기하세요.
+
 ### 데이터가 없음 (행 0개)
 
 기간 내 트래픽 데이터가 없을 수 있습니다.  
@@ -186,13 +219,18 @@ ADC 토큰이 만료됐습니다.
 ga4-mcp/
 ├── README.md                          이 문서
 ├── .mcp.json                          MCP 서버 설정 (Claude Code 자동 로드)
-├── .env.example                       환경변수 템플릿 참고용
 ├── .gitignore
 ├── setup.sh                           macOS / Linux 자동 설치
 ├── setup.ps1                          Windows 자동 설치 (PowerShell)
-├── CLAUDE.md                          Claude 컨텍스트 파일 (B2C/B2B 분기 포함)
+├── CLAUDE.md                          Claude 컨텍스트 (B2C/B2B 분기 + MCP 도구 목록)
 ├── docs/
-│   └── gcp-setup-guide.md             Google Cloud 인증 단계별 가이드
+│   ├── gcp-setup-guide.md             GA4용 Google Cloud 인증 가이드
+│   └── sheets-gcp-setup.md            Google Sheets MCP 인증 가이드
+├── mcp-server/                        Google Sheets MCP 서버
+│   ├── index.js                       MCP 서버 (10개 도구)
+│   ├── package.json
+│   ├── .gitignore
+│   └── oauth_credentials.json         (setup.sh이 자동 생성 · gitignore됨)
 └── prompts/
     ├── 00-first-steps.md              처음 시작할 때 — 환경 파악 + 유형 선택
     ├── 01-weekly-channel-report.md    주간 채널별 리포트
@@ -201,19 +239,31 @@ ga4-mcp/
     ├── 04-realtime.md                 실시간 모니터링
     ├── 05-full-marketing-report.md    종합 마케팅 리포트
     ├── 06-ecommerce-report.md         B2C 이커머스 전용
-    └── 07-b2b-report.md               B2B 기업 웹사이트 전용
+    ├── 07-b2b-report.md               B2B 기업 웹사이트 전용
+    └── 08-ga4-to-sheets.md            GA4 → Google Sheets 연동 활용
 ```
 
 ---
 
 ## 사용 패키지
 
+### GA4 MCP
+
 | 항목 | 값 |
 |---|---|
-| 패키지 | `mcp-server-ga4` (npm · okamoto53515606 · MIT) |
+| 패키지 | `mcp-server-ga4` (npm · MIT) |
 | 실행 | `npx -y mcp-server-ga4` (별도 설치 불필요) |
 | 인증 | Google ADC (gcloud CLI 발급) |
 | 노출 도구 | `run_report` · `batch_run_reports` · `get_realtime_data` · `list_metrics` · `list_dimensions` |
 | 필요 환경 | Node.js 18+ · gcloud CLI |
 
-> 이전 버전(`analytics-mcp` PyPI)과 달리 Python/pipx 없이 Node.js만으로 실행됩니다.
+### Google Sheets MCP
+
+| 항목 | 값 |
+|---|---|
+| 구현 | 자체 구현 MCP 서버 (`mcp-server/index.js`) |
+| 인증 | OAuth 2.0 Desktop App (첫 실행 시 브라우저 1회 인증) |
+| 노출 도구 | `get_spreadsheet_info` · `read_sheet` · `write_sheet` · `append_sheet` · `create_spreadsheet` · `format_cells` 등 10개 |
+| 필요 환경 | Node.js 18+ · `mcp-server/oauth_credentials.json` |
+
+> GA4 MCP는 Python/pipx 없이 Node.js만으로 실행됩니다. (이전 버전 `analytics-mcp` PyPI 대체)

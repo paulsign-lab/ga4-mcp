@@ -11,12 +11,12 @@ warn() { echo -e "  ${YELLOW}⚠️  $*${NC}"; }
 err()  { echo -e "  ${RED}❌ $*${NC}"; exit 1; }
 
 echo ""
-echo "🚀 GA4 MCP 설치 시작"
+echo "🚀 GA4 + Google Sheets MCP 설치 시작"
 echo "──────────────────────────────────────────"
 echo ""
 
 # ── Step 1: Node.js 확인 ─────────────────────────────────────
-echo "📦 [1/4] Node.js 확인..."
+echo "📦 [1/5] Node.js 확인..."
 if ! command -v node &>/dev/null; then
   err "Node.js가 없습니다. https://nodejs.org 에서 LTS 버전을 설치 후 다시 실행하세요."
 fi
@@ -28,7 +28,7 @@ ok "Node.js $(node --version)"
 
 # ── Step 2: gcloud CLI 확인 / 설치 ──────────────────────────
 echo ""
-echo "☁️  [2/4] gcloud CLI 확인..."
+echo "☁️  [2/5] gcloud CLI 확인..."
 
 GCLOUD_CMD=""
 if command -v gcloud &>/dev/null; then
@@ -69,7 +69,7 @@ fi
 
 # ── Step 3: Google 인증 (ADC) ────────────────────────────────
 echo ""
-echo "🔐 [3/4] Google 인증 설정..."
+echo "🔐 [3/5] Google 인증 설정..."
 
 ADC_FILE="$HOME/.config/gcloud/application_default_credentials.json"
 SKIP_AUTH=""
@@ -137,7 +137,7 @@ fi
 
 # ── Step 4: GA4 속성 ID 설정 ─────────────────────────────────
 echo ""
-echo "📊 [4/4] GA4 속성 ID 설정..."
+echo "📊 [4/5] GA4 속성 ID 설정..."
 
 # 현재 .mcp.json에서 속성 ID 읽기
 CURRENT_ID=$(node -e "
@@ -171,14 +171,62 @@ else
   done
 fi
 
-# .mcp.json 속성 ID 업데이트
+# .mcp.json 속성 ID + Sheets 경로 업데이트
+REPO_PATH="$(pwd)"
 node -e "
 const fs = require('fs');
 const d = JSON.parse(fs.readFileSync('.mcp.json', 'utf8'));
 d.mcpServers.ga4.env.GA_PROPERTY_ID = '$PROPERTY_ID';
+d.mcpServers['google-sheets'].args = ['$REPO_PATH/mcp-server/index.js'];
 fs.writeFileSync('.mcp.json', JSON.stringify(d, null, 2) + '\n');
 "
 ok ".mcp.json 속성 ID 등록 완료 ($PROPERTY_ID)"
+
+# ── Step 5: Google Sheets MCP 설정 ───────────────────────────
+echo ""
+echo "📋 [5/5] Google Sheets MCP 설정..."
+
+SHEETS_DEST="$REPO_PATH/mcp-server/oauth_credentials.json"
+SHEETS_DONE=""
+
+if [ -f "$SHEETS_DEST" ]; then
+  ok "Sheets OAuth 클라이언트 이미 설정됨"
+  SHEETS_DONE=1
+else
+  # sheets 이름 포함 파일 우선 탐색
+  SHEETS_FILE=$(ls "$HOME/Downloads"/client_secret_sheets*.json 2>/dev/null | head -1 || true)
+
+  if [ -z "$SHEETS_FILE" ]; then
+    # GA4 파일 제외한 첫 번째 client_secret 파일 탐색
+    SAVED_GA4="$HOME/.config/gcloud/ga4_oauth_client.json"
+    for f in "$HOME/Downloads"/client_secret_*.json; do
+      [ -f "$f" ] || continue
+      if ! cmp -s "$f" "$SAVED_GA4" 2>/dev/null; then
+        SHEETS_FILE="$f"
+        break
+      fi
+    done
+  fi
+
+  if [ -n "$SHEETS_FILE" ]; then
+    cp "$SHEETS_FILE" "$SHEETS_DEST"
+    ok "Sheets OAuth 클라이언트 설정: $(basename "$SHEETS_FILE")"
+    SHEETS_DONE=1
+  else
+    warn "Google Sheets OAuth 클라이언트 JSON을 찾지 못했습니다."
+    echo ""
+    echo "     ▸ Sheets MCP 설정 방법: docs/sheets-gcp-setup.md"
+    echo "     ▸ GA4 분석은 지금 바로 사용 가능합니다."
+    echo "     ▸ Sheets JSON 발급 후 bash setup.sh 재실행으로 추가할 수 있습니다."
+    echo ""
+  fi
+fi
+
+if [ -n "$SHEETS_DONE" ]; then
+  echo "  📦 Sheets MCP 의존성 설치 중..."
+  (cd "$REPO_PATH/mcp-server" && npm install --quiet 2>/dev/null || npm install)
+  ok "npm 의존성 설치 완료"
+fi
 
 # ── 설치 완료 ─────────────────────────────────────────────────
 echo ""
@@ -193,5 +241,11 @@ echo "  Claude가 실행되면 아래 질문을 입력해보세요:"
 echo ""
 echo "    「지난 7일 채널별 세션 수와 전환 수를 표로 정리해줘」"
 echo ""
-echo "  더 많은 분석 템플릿: prompts/ 폴더"
+if [ -n "$SHEETS_DONE" ]; then
+  echo "  Google Sheets 연동 예시:"
+  echo ""
+  echo "    「GA4 채널 리포트를 구글 시트에 표로 만들어줘」"
+  echo ""
+fi
+echo "  분석 템플릿: prompts/ 폴더"
 echo ""

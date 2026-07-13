@@ -14,14 +14,35 @@
 
 ## 언제 '분석'이고 언제 '설정'인가 (라우팅)
 
-사용자 요청을 먼저 두 갈래로 판단하세요.
+사용자 요청을 먼저 세 갈래로 판단하세요.
 
+- **아직 MCP를 설치하지 않았고** "구글 MCP 설치 / GA4 연결 / 시트 연결 / MCP 설치 도와줘 / 처음 세팅" 을 요청 → **설치·온보딩** 축.
+  → **`docs/install-onboarding.md`를 끝까지 읽고, 그 대본을 처음부터 한 단계씩** 안내합니다 (아래 참조).
 - **URL을 주며** "분석해줘 / 마케팅 세팅 / GA4 세팅 / GTM / dataLayer / 추적 코드 / 리드 트래킹 / 이커머스 추적" 을 요청 → **설정** 축.
   → `site-marketing-infra-setup` 스킬을 발동합니다 (아래 참조).
 - **이미 GA4에 데이터가 있고** "지난 28일 채널별 매출 / 랜딩 페이지 TOP 10 / 리드 전환율" 등 조회를 요청 → **분석** 축.
   → `mcp__ga4__*` 도구 + `prompts/`의 해당 템플릿을 사용합니다.
 
-애매하면 물어보세요: "지금 데이터를 분석할까요, 아니면 추적을 새로 설정할까요?"
+애매하면 물어보세요: "지금 설치·연결을 도와드릴까요, 데이터를 분석할까요, 아니면 추적을 새로 설정할까요?"
+
+> 💡 조회 도중 `mcp__ga4__*` 도구가 아예 없거나 `-32000`·`invalid_grant`·`PERMISSION_DENIED`가 나오면
+> 아직 설치·인증이 안 된 것입니다. 분석을 밀어붙이지 말고 **설치·온보딩 축**으로 전환하세요.
+
+---
+
+## 설치·온보딩 — `docs/install-onboarding.md`
+
+수강생이 GA4·시트 MCP를 **설치·연결**하려 하면 이 축입니다.
+
+발동 조건 — "구글 MCP 설치 / GA4 연결해줘 / 시트 연결 / MCP 설치 / 처음부터 세팅" 등.
+→ `docs/install-onboarding.md`를 끝까지 읽고 **그 5단계 흐름을 처음부터 한 단계씩** 진행합니다.
+
+핵심 원칙 (온보딩 문서에 상세):
+
+- **한 번에 다 쏟지 말고**, 각 단계에서 수강생이 완료했는지 확인한 뒤 다음으로 넘어간다.
+- 두 가지 함정을 **선제적으로** 경고한다 — ① JSON을 폴더로 직접 옮기지 말 것(`~/Downloads/`에 두고 `setup.sh`), ② 동의 화면을 **프로덕션으로 게시**할 것(안 하면 7일 뒤 `invalid_grant`).
+- GCP 콘솔 클릭 순서는 `docs/gcp-setup-guide.md`(GA4)·`docs/sheets-gcp-setup.md`(시트)로 연결한다.
+- 어떤 인증 오류든 기본 처방은 **손대지 말고 `bash setup.sh` 재실행**. 수동 `gcloud auth ...`는 스코프 차단되니 권하지 않는다.
 
 ---
 
@@ -232,7 +253,10 @@ URL 하나로 마케팅 인프라 4종(체크리스트 xlsx · 가이드 docx ·
 | 에러 메시지 | 원인 | 안내 |
 |---|---|---|
 | `GA_PROPERTY_ID is not set` | 속성 ID 미입력 | `bash setup.sh` 재실행 또는 `.mcp.json` 직접 수정 |
-| `PERMISSION_DENIED` | 계정 권한 없음 | GA4 속성 액세스 관리에서 이메일 권한 확인 |
+| `PERMISSION_DENIED` (GA4 조회) | 계정 권한 없음 | GA4 속성 액세스 관리에서 이메일 권한 확인 |
+| `invalid_grant` / `reauth required` | 동의 화면이 "테스트" 상태 → 토큰 7일 만료 | 동의 화면을 **프로덕션으로 게시**(`docs/gcp-setup-guide.md` 3-6) 후 `bash setup.sh` 재실행 |
+| `PERMISSION_DENIED: insufficient scopes` / 브라우저 "액세스 차단됨" | 수동 `gcloud auth ...`로 기본 클라이언트의 Analytics 스코프가 차단됨 | 수동 실행 금지 → `bash setup.sh` 재실행(본인 `--client-id-file` 사용) |
+| `google-sheets` `-32000` (재연결 실패) | `mcp-server/node_modules` 없음 (JSON 수동 이동 + setup.sh 건너뜀) | `cd mcp-server && npm install` 후 `/mcp` 재연결 |
 | 데이터 0행 | 기간 내 데이터 없음 | 기간을 `last_90_days`로 늘려 재시도 |
 | 이커머스 지표 0 | 전자상거래 이벤트 미설정 | `site-marketing-infra-setup` 스킬로 dataLayer·GTM 설정 안내 (`prompts/09`) |
 | 전환 이벤트 없음 | GA4 전환·추적 미설정 | 추적이 아예 없으면 스킬로 설정(`prompts/09`), 있으면 GA4 → 관리 → 이벤트 → 전환 표시 |

@@ -48,6 +48,14 @@
 
 ## 설치 (3단계 · 약 10분)
 
+> 🧑‍🏫 **처음 설치하는 수강생이라면**, `ga4-mcp` 폴더에서 `claude`를 켠 뒤
+> **"구글 MCP 설치 도와줘"** 라고 말하면 Claude가 [docs/install-onboarding.md](docs/install-onboarding.md)를 따라
+> **처음부터 한 단계씩** 안내합니다. 아래 수동 절차와 내용은 동일합니다.
+
+> 🔴 **시작 전 두 가지만 기억하세요 (오류의 90%가 여기서 발생):**
+> 1. 다운로드한 **JSON을 폴더로 직접 옮기지 마세요.** `~/Downloads/`에 그대로 두면 `setup.sh`가 처리합니다.
+> 2. GCP 동의 화면을 **"프로덕션"으로 게시하세요.** 안 하면 정확히 **7일 뒤** 인증이 `invalid_grant`로 깨집니다.
+
 ### 0단계 · GCP 인증 준비 (처음이라면)
 
 구글 계정 인증이 처음이라면 setup.sh 실행 전에 먼저 읽어보세요.
@@ -57,7 +65,7 @@
 | **GA4 연동** (필수) | [docs/gcp-setup-guide.md](docs/gcp-setup-guide.md) |
 | **Google Sheets 연동** (선택) | [docs/sheets-gcp-setup.md](docs/sheets-gcp-setup.md) |
 
-→ 각 가이드에서 GCP 콘솔 API 활성화 + OAuth 클라이언트 발급 방법을 단계별로 안내합니다.
+→ 각 가이드에서 GCP 콘솔 API 활성화 + OAuth 클라이언트 발급 + **프로덕션 게시**를 단계별로 안내합니다.
 
 ### 1단계 · 클론
 
@@ -247,10 +255,13 @@ GA4 주간 리포트를 4개 탭(요약·채널·랜딩·디바이스)으로 자
 
 ## 트러블슈팅
 
-### `차단된 앱` (브라우저 인증 화면)
+### `차단된 앱` / `액세스 차단됨` (브라우저 인증 화면)
 
-회사 Google Workspace 계정이고 GCP OAuth 클라이언트가 없을 때 발생합니다.  
-→ [docs/gcp-setup-guide.md](docs/gcp-setup-guide.md) 완료 후 재실행
+두 가지 경우가 있습니다.
+1. 회사 Google Workspace 계정이고 GCP OAuth 클라이언트가 없을 때  
+   → [docs/gcp-setup-guide.md](docs/gcp-setup-guide.md) 완료 후 재실행
+2. `gcloud auth application-default login` 을 **직접(옵션 없이) 실행**했을 때  
+   → 구글 기본 클라이언트는 Analytics 스코프가 차단됨. **수동 실행하지 말고 `bash setup.sh` 재실행** (본인 클라이언트로 인증)
 
 ### `GA_PROPERTY_ID is not set`
 
@@ -287,8 +298,15 @@ GA4 주간 리포트를 4개 탭(요약·채널·랜딩·디바이스)으로 자
 
 ### `invalid_grant` 또는 `reauth required`
 
-ADC 토큰이 만료됐습니다.  
-→ `bash setup.sh` 재실행 후 y 입력하여 재인증
+대개 **동의 화면이 "테스트" 상태라 토큰이 7일 만에 만료**된 것입니다.  
+→ ① GCP 콘솔 → OAuth 동의 화면 → **게시 상태를 "프로덕션"으로 게시** (근본 해결, [3-6단계](docs/gcp-setup-guide.md))  
+→ ② `bash setup.sh` 재실행 후 y 입력하여 재인증
+
+### `google-sheets` MCP `-32000` (재연결 실패)
+
+`mcp-server/node_modules`가 없어 서버가 시작 즉시 종료된 경우입니다.  
+(JSON을 손으로 옮기고 `setup.sh`를 건너뛰면 발생)  
+→ `cd mcp-server && npm install` 후 `/mcp`로 재연결
 
 ---
 
@@ -312,7 +330,8 @@ ga4-mcp/
 │           ├── reference/                 플랫폼·모델 감지, GTM 검증 규칙
 │           └── examples/                  Janibell 산출물 예시 (품질 기준)
 ├── docs/
-│   ├── gcp-setup-guide.md             GA4용 Google Cloud 인증 가이드
+│   ├── install-onboarding.md          🧑‍🏫 "MCP 설치 도와줘" 시 처음부터 안내하는 온보딩 대본
+│   ├── gcp-setup-guide.md             GA4용 Google Cloud 인증 가이드 (프로덕션 게시 포함)
 │   └── sheets-gcp-setup.md            Google Sheets MCP 인증 가이드
 ├── mcp-server/                        Google Sheets MCP 서버
 │   ├── index.js                       MCP 서버 (10개 도구)

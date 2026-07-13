@@ -1,6 +1,13 @@
 # 환경 변수 (민감 정보)
 .env
 
+# Google 인증 파일 (절대 커밋 금지 · 개인 시크릿)
+client_secret_*.json
+oauth_credentials.json
+token.json
+*service-account*.json
+application_default_credentials.json
+
 # macOS
 .DS_Store
 

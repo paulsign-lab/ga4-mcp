@@ -89,7 +89,8 @@ if [ -z "$SKIP_AUTH" ]; then
   if [ -f "$SAVED_CLIENT" ]; then
     OAUTH_CLIENT="$SAVED_CLIENT"
   else
-    FOUND=$(ls "$HOME/Downloads"/client_secret_*.json 2>/dev/null | head -1 || true)
+    # ~/Downloads 우선, 없으면 프로젝트 폴더 안(손으로 옮긴 경우)도 탐지
+    FOUND=$(ls "$HOME/Downloads"/client_secret_*.json ./client_secret_*.json 2>/dev/null | head -1 || true)
     if [ -n "$FOUND" ]; then
       mkdir -p "$HOME/.config/gcloud"
       cp "$FOUND" "$SAVED_CLIENT"
@@ -103,6 +104,10 @@ if [ -z "$SKIP_AUTH" ]; then
     echo "  🔑 OAuth 클라이언트 사용 중 (차단 오류 방지)"
     echo "  브라우저가 열리면 GA4에 접근 권한이 있는 Google 계정으로"
     echo "  로그인 후 '허용' 버튼을 클릭하세요."
+    echo ""
+    warn "동의 화면이 '테스트' 상태면 인증이 7일 뒤 만료됩니다."
+    echo "     → GCP 콘솔 → OAuth 동의 화면 → '앱 게시(프로덕션)'를 꼭 해두세요."
+    echo "        (docs/gcp-setup-guide.md 3-6단계)"
     echo ""
     "$GCLOUD_CMD" auth application-default login \
       --client-id-file="$OAUTH_CLIENT" \
@@ -193,13 +198,13 @@ if [ -f "$SHEETS_DEST" ]; then
   ok "Sheets OAuth 클라이언트 이미 설정됨"
   SHEETS_DONE=1
 else
-  # sheets 이름 포함 파일 우선 탐색
-  SHEETS_FILE=$(ls "$HOME/Downloads"/client_secret_sheets*.json 2>/dev/null | head -1 || true)
+  # sheets 이름 포함 파일 우선 탐색 (Downloads + 프로젝트 폴더)
+  SHEETS_FILE=$(ls "$HOME/Downloads"/client_secret_sheets*.json ./client_secret_sheets*.json 2>/dev/null | head -1 || true)
 
   if [ -z "$SHEETS_FILE" ]; then
-    # GA4 파일 제외한 첫 번째 client_secret 파일 탐색
+    # GA4 파일 제외한 첫 번째 client_secret 파일 탐색 (Downloads + 프로젝트 폴더)
     SAVED_GA4="$HOME/.config/gcloud/ga4_oauth_client.json"
-    for f in "$HOME/Downloads"/client_secret_*.json; do
+    for f in "$HOME/Downloads"/client_secret_*.json ./client_secret_*.json; do
       [ -f "$f" ] || continue
       if ! cmp -s "$f" "$SAVED_GA4" 2>/dev/null; then
         SHEETS_FILE="$f"
@@ -248,4 +253,7 @@ if [ -n "$SHEETS_DONE" ]; then
   echo ""
 fi
 echo "  분석 템플릿: prompts/ 폴더"
+echo ""
+echo -e "  ${YELLOW}🔴 인증이 일주일 뒤 끊긴다면${NC} 동의 화면이 아직 '테스트' 상태입니다."
+echo "     GCP 콘솔 → OAuth 동의 화면 → '앱 게시(프로덕션)' 후 bash setup.sh 재실행."
 echo ""

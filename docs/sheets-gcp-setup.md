@@ -55,10 +55,17 @@ GA4용과 **별도**로 Sheets 전용 OAuth 클라이언트를 만듭니다.
    | 이름 | `sheets-mcp` |
 
 3. **만들기** 클릭
-4. **JSON 다운로드** → `~/Downloads/` 폴더에 저장
+4. **JSON 다운로드** → `~/Downloads/` 폴더에 그대로 저장
 
-> ⚠️ `client_secret_sheets_*.json` 처럼 구분되는 이름으로 저장하거나  
-> GA4 JSON과 혼동되지 않도록 주의하세요.
+> ℹ️ **다운로드 파일 이름은 바꿀 수 없습니다.**  
+> 구글은 항상 `client_secret_<클라이언트ID>.apps.googleusercontent.com.json` 형태로 내려줍니다.  
+> 그래서 이름으로 GA4용/Sheets용을 구분하려 애쓸 필요 없습니다 —  
+> **두 파일을 모두 `~/Downloads/`에 두기만 하면**, `setup.sh`가 GA4에 쓴 파일과  
+> 다른 나머지 하나를 Sheets용으로 자동 배정합니다.
+
+> 🔴 **JSON을 손으로 `mcp-server/` 안에 옮기지 마세요.**  
+> `~/Downloads/`에 두고 `bash setup.sh`만 실행하면 복사·이름변경·`npm install`까지  
+> 자동 처리됩니다. 직접 옮기면 `npm install`이 건너뛰어져 `-32000` 오류가 납니다.
 
 ---
 
@@ -80,8 +87,12 @@ GA4용과 **별도**로 Sheets 전용 OAuth 클라이언트를 만듭니다.
 ④ "✅ 인증 완료!" 페이지 표시 → 브라우저 닫기
 ```
 
-인증 완료 후 `mcp-server/token.json`이 자동 생성됩니다.  
-이후 60일간 자동 로그인 (만료 시 자동 갱신).
+인증 완료 후 `mcp-server/token.json`이 자동 생성됩니다.
+
+> 🔴 **동의 화면이 "프로덕션"으로 게시돼 있어야 토큰이 유지됩니다.**  
+> GA4 가이드 3-6단계에서 프로덕션 게시를 마쳤다면 Sheets에도 그대로 적용됩니다.  
+> 아직 "테스트" 상태라면 이 토큰도 **7일 뒤 만료**되어 시트 연동이 끊깁니다 —  
+> `docs/gcp-setup-guide.md`의 **3-6단계(프로덕션 게시)**를 먼저 완료하세요.
 
 ---
 
@@ -128,11 +139,25 @@ claude mcp list | grep google-sheets
 터미널에 출력된 `https://accounts.google.com/...` URL을 복사해  
 브라우저 주소창에 직접 붙여넣기하세요.
 
-### 토큰 만료 (`Token has been expired`)
+### 토큰 만료 (`Token has been expired` / `invalid_grant`)
 
-60일 이상 사용하지 않으면 토큰이 만료됩니다.
+**7일 만에 만료된다면 동의 화면이 아직 "테스트" 상태입니다.**  
+→ 먼저 `docs/gcp-setup-guide.md`의 **3-6단계(프로덕션 게시)**를 완료하세요. (근본 해결)
+
+그런 다음 저장된 토큰을 지우고 재인증합니다.
 
 ```bash
 rm mcp-server/token.json
 claude  # 재시작하면 브라우저 인증이 다시 열림
 ```
+
+### `-32000` / `google-sheets 재연결 실패`
+
+`mcp-server/node_modules/`가 없어서 서버가 시작하자마자 죽는 경우입니다.  
+(JSON을 손으로 옮기고 `setup.sh`를 건너뛰면 이 상태가 됩니다)
+
+```bash
+cd mcp-server && npm install && cd ..
+```
+
+→ 설치 후 `/mcp`로 `google-sheets`를 재연결하세요.

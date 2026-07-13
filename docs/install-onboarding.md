@@ -52,12 +52,30 @@
 
 ---
 
-## 2단계 · 저장소 클론 (아직 안 했다면)
+## 2단계 · 저장소 가져오기 + **IDE로 폴더 열기** (터미널 없이)
 
-```bash
-git clone https://github.com/paulsign-lab/ga4-mcp.git
-cd ga4-mcp
-```
+> 🔑 **가장 중요한 원칙:** Claude Code는 **켜질 때의 "현재 폴더"** 에서 `.mcp.json`을 읽습니다.
+> 그래서 방법이 뭐든 **결국 `ga4-mcp` 폴더가 IDE의 열린 프로젝트여야** MCP가 연결됩니다.
+> 터미널 `cd`를 몰라도, **IDE에서 그 폴더를 여는 것**이 `cd` 역할을 대신합니다.
+
+### 클론 방법 (터미널이 어렵다면 아래 중 하나)
+
+| 방법 | 방식 |
+|---|---|
+| **IDE 내장 클론** (추천) | 명령 팔레트(`Cmd/Ctrl+Shift+P`) → "Git: Clone" → GitHub 주소 붙여넣기 → 저장 위치 선택 → 완료되면 **"열기"** 클릭 |
+| **GitHub Desktop** | GUI 앱으로 클릭만으로 클론 후, 그 폴더를 IDE로 열기 |
+| **ZIP 다운로드** | GitHub → 초록 `Code` 버튼 → "Download ZIP" → 압축 풀기 → 그 폴더를 IDE로 열기 |
+
+GitHub 주소: `https://github.com/paulsign-lab/ga4-mcp.git`
+
+**IDE 내장 클론**이 제일 매끄럽습니다 — 클론이 끝나면 "여시겠습니까?"가 뜨는데,
+여기서 **"열기"** 를 누르면 `ga4-mcp` 폴더가 그대로 프로젝트로 열립니다.
+
+> 🔴 **흔한 실수:** 상위 폴더(예: `교육/`)에서 Claude를 먼저 켠 뒤 거기서 클론하면,
+> 저장소는 `교육/ga4-mcp/`에 생기지만 Claude는 여전히 `교육/`을 보고 있어 **MCP가 안 붙습니다.**
+> → 이럴 땐 **IDE에서 `ga4-mcp` 폴더를 다시 열고(= 프로젝트로 열기)** Claude를 재시작하면 됩니다.
+
+(터미널에 익숙하다면: `git clone https://github.com/paulsign-lab/ga4-mcp.git && cd ga4-mcp` 후 그 폴더에서 `claude`)
 
 ---
 
@@ -80,8 +98,11 @@ bash setup.sh
 
 ## 4단계 · Claude Code 실행 & 연결 확인
 
+**`ga4-mcp` 폴더가 열린 상태**에서 Claude Code를 켭니다.
+(IDE로 그 폴더를 열었다면 IDE의 통합 터미널/Claude가 자동으로 그 폴더 기준으로 시작됩니다.)
+
 ```bash
-claude       # 반드시 ga4-mcp 폴더 안에서
+claude       # ga4-mcp 폴더가 '현재 폴더'인 상태에서
 ```
 
 Claude가 켜지면:
@@ -114,6 +135,6 @@ Claude가 켜지면:
 | GA4 **invalid_grant** (7일 뒤) | 동의 화면이 "테스트" 상태 | GA4 가이드 **3-6 프로덕션 게시** 후 `bash setup.sh` 재실행 |
 | GA4 **액세스 차단됨** | 옵션 없이 `gcloud auth ...` 수동 실행 (기본 클라이언트 스코프 차단) | 수동으로 치지 말고 `bash setup.sh` 재실행 |
 | GA4 **PERMISSION_DENIED** | 계정이 해당 GA4 속성 접근 권한 없음 | GA4 → 관리 → 속성 액세스 관리에서 이메일 권한 확인 |
-| 도구가 안 보임 | `ga4-mcp` 폴더 밖에서 `claude` 실행 | `cd ga4-mcp && claude` |
+| 도구가 안 보임 / MCP 미연결 | `ga4-mcp`가 아닌 상위 폴더에서 Claude 실행 중 | **IDE에서 `ga4-mcp` 폴더를 다시 열고** Claude 재시작 (터미널이면 `cd ga4-mcp && claude`) |
 
 > 어떤 오류든 대부분의 정답은 **"손대지 말고 `bash setup.sh` 재실행"** 입니다.

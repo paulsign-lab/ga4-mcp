@@ -67,12 +67,22 @@
 
 → 각 가이드에서 GCP 콘솔 API 활성화 + OAuth 클라이언트 발급 + **프로덕션 게시**를 단계별로 안내합니다.
 
-### 1단계 · 클론
+### 1단계 · 저장소 가져오기 + IDE로 **폴더 열기**
 
+**터미널이 익숙하다면:**
 ```bash
 git clone https://github.com/paulsign-lab/ga4-mcp.git
 cd ga4-mcp
 ```
+
+**터미널이 어렵다면 (교육생 추천) — IDE로 클론:**
+1. IDE 명령 팔레트(`Cmd/Ctrl+Shift+P`) → **"Git: Clone"**
+2. 주소 붙여넣기: `https://github.com/paulsign-lab/ga4-mcp.git`
+3. 저장 위치 선택 → 완료되면 **"열기"** 클릭 (또는 GitHub Desktop / ZIP 다운로드 후 폴더 열기)
+
+> 🔑 방법과 무관하게 **`ga4-mcp` 폴더가 IDE의 열린 프로젝트여야** 합니다.
+> Claude Code는 켜질 때의 현재 폴더에서 `.mcp.json`을 읽기 때문입니다.
+> IDE에서 그 폴더를 여는 것이 터미널 `cd` 역할을 대신합니다.
 
 ### 2단계 · 자동 설치 실행
 
@@ -101,8 +111,10 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 claude
 ```
 
-> 반드시 `ga4-mcp` 폴더 안에서 실행해야 합니다.  
-> `.mcp.json`이 이 폴더에 있어야 GA4 MCP가 자동 연결됩니다.
+> 반드시 **`ga4-mcp` 폴더가 열린 상태**에서 실행해야 합니다.  
+> `.mcp.json`이 이 폴더에 있어야 GA4 MCP가 자동 연결됩니다.  
+> 🔴 상위 폴더에서 Claude를 켠 뒤 클론했다면 MCP가 안 붙습니다 —  
+> **IDE에서 `ga4-mcp` 폴더를 다시 열고** Claude를 재시작하세요.
 
 연결 확인:
 
